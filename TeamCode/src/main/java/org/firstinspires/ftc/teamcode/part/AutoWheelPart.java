@@ -6,22 +6,19 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-// https://www.youtube.com/watch?v=Av9ZMjS--gY
-
 class Odometry {
     private final DcMotor odometry;
-    private int previous_tick = 0;
-
+    private int last_tick = 0;
     public Odometry(String name, HardwareMap hwm) {
         this.odometry = hwm.get(DcMotor.class, name);
         this.odometry.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         this.odometry.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
-    public int getDeltaTick() {
-        int cur_tick = this.odometry.getCurrentPosition();
-        int delta_tick = cur_tick - this.previous_tick;
-        this.previous_tick = cur_tick;
-        return delta_tick;
+    public int getTick() {
+        return this.odometry.getCurrentPosition() - this.last_tick;
+    }
+    public void reset() {
+        this.last_tick = this.odometry.getCurrentPosition();
     }
 }
 
@@ -44,9 +41,17 @@ class Wheel {
     }
 }
 
-public class AutoWheelPart extends Part {
-    private double target_x, target_y, target_theta;
+class Position {
+    public double x, y, theta;
+    public Position(double x, double y, double theta) {
+        this.x = x;
+        this.y = y;
+        this.theta = theta;
+    }
+}
 
+public class AutoWheelPart extends Part {
+    private Position target;
     private final Wheel wheelFR, wheelFL, wheelBR, wheelBL;
     private final Odometry odometryXL, odometryXR, odometryY;
 
@@ -59,9 +64,12 @@ public class AutoWheelPart extends Part {
     private final double ROTATION_SPEED_FACTOR = 0.7; // X length + Y length
 
     private void setTarget(double x, double y, double theta) {
-        this.target_x = x;
-        this.target_y = y;
-        this.target_theta = theta;
+        this.odometryXL.reset();
+        this.odometryXR.reset();
+        this.odometryY.reset();
+        this.target.x = x;
+        this.target.y = y;
+        this.target.theta = theta;
     }
 
     public enum Command implements RobotCommand {
@@ -100,20 +108,21 @@ public class AutoWheelPart extends Part {
     public void update() {
         // Position Calculation (By using Odometry)
         // TODO : Change the formulas (Fit to the robot) + Add IMU
-        double dxl, dxr, dy;
-        dxl = (double)this.odometryXL.getDeltaTick() * TILE_RATIO;
-        dxr = (double)this.odometryXR.getDeltaTick() * TILE_RATIO;
-        dy = (double)this.odometryY.getDeltaTick() * TILE_RATIO;
+        double dxl_odm, dxr_odm, dy_odm;
+        dxl_odm = (double)this.odometryXL.getTick() * TILE_RATIO;
+        dxr_odm = (double)this.odometryXR.getTick() * TILE_RATIO;
+        dy_odm = (double)this.odometryY.getTick() * TILE_RATIO;
 
-        double cur_x, cur_y, cur_theta;
-        cur_x = (dxl + dxr) / 2.0;
-        cur_y = dy - Y_OFFSET * (dxr - dxl) / 2.0 / X_OFFSET;
-        cur_theta = (dxr - dxl) / 2.0 / X_OFFSET;
+        double dx, dy, dtheta;
+
+        dx = (dxl_odm + dxr_odm) / 2.0;
+        dy = dy_odm - (dxr_odm - dxl_odm) / 2.0 / X_OFFSET * Y_OFFSET;
+        dtheta = (dxr_odm - dxl_odm) / 2.0 / X_OFFSET;
 
         double delta_x, delta_y, delta_theta;
-        delta_x = this.target_x - cur_x;
-        delta_y = this.target_y - cur_y;
-        delta_theta = this.target_theta - cur_theta;
+        delta_x = this.target.x - dx;
+        delta_y = this.target.y - dy;
+        delta_theta = this.target.theta - dtheta;
 
         // Mecanum Wheel Movement Calculation (https://ecam-eurobot.github.io/Tutorials/mechanical/mecanum.html)
 
