@@ -3,22 +3,27 @@ package org.firstinspires.ftc.teamcode.part;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.robot.Robot;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 class Odometry {
     private final DcMotor odometry;
+    private int sign = 1;
     private int last_tick = 0;
     public Odometry(String name, HardwareMap hwm) {
         this.odometry = hwm.get(DcMotor.class, name);
         this.odometry.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         this.odometry.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
-    public int getTick() {
-        return this.odometry.getCurrentPosition() - this.last_tick;
+    public int getDeltaTick() {
+        int delta = this.odometry.getCurrentPosition() * this.sign - this.last_tick;
+        this.last_tick += delta;
+        return delta;
     }
-    public void reset() {
-        this.last_tick = this.odometry.getCurrentPosition();
+
+    public void reverse() {
+        this.sign = -1;
     }
 }
 
@@ -41,9 +46,9 @@ class Wheel {
     }
 }
 
-class Position {
+class RobotPosition {
     public double x, y, theta;
-    public Position(double x, double y, double theta) {
+    public RobotPosition(double x, double y, double theta) {
         this.x = x;
         this.y = y;
         this.theta = theta;
@@ -51,41 +56,53 @@ class Position {
 }
 
 public class AutoWheelPart extends Part {
-    private Position target;
+    private final RobotPosition target = new RobotPosition(0,0,0);
+    private final RobotPosition current = new RobotPosition(0, 0, 0);
     private final Wheel wheelFR, wheelFL, wheelBR, wheelBL;
     private final Odometry odometryXL, odometryXR, odometryY;
 
     // Constants
     // TODO : Change the values
-    private final double X_OFFSET = 1.0;
-    private final double Y_OFFSET = 1.0;
-    private final double TILE_RATIO = 1.0;
+    private final double X_OFFSET = 0.246;
+    private final double Y_OFFSET = 0.265;
+    private final double TILE_RATIO = 0.000124;
     private final double ABLE_DISTANCE_ERROR = 0.1;
     private final double ROTATION_SPEED_FACTOR = 0.7; // X length + Y length
+    private final double SPEED_FACTOR = 0.5;
+    private final int STOP_LIMIT = 100;
 
-    private void setTarget(double x, double y, double theta) {
-        this.odometryXL.reset();
-        this.odometryXR.reset();
-        this.odometryY.reset();
+    private int stop_counter = 0;
+
+    private void setTarget(double x, double y, double angle) {
         this.target.x = x;
         this.target.y = y;
-        this.target.theta = theta;
+        this.target.theta = angle * Math.PI / 180;
     }
 
     public enum Command implements RobotCommand {
-        MOVE
+        MOVE,
+        RETURN
     }
     public AutoWheelPart(HardwareMap hwm, Telemetry tel) {
         super(hwm, tel);
+
         this.wheelFR = new Wheel("wheelFR", hwm);
         this.wheelFL = new Wheel("wheelFL", hwm);
         this.wheelBR = new Wheel("wheelBR", hwm);
         this.wheelBL = new Wheel("wheelBL", hwm);
 
+        this.wheelFL.setDirection(DcMotorSimple.Direction.REVERSE);
+        this.wheelFR.setDirection(DcMotorSimple.Direction.FORWARD);
+        this.wheelBL.setDirection(DcMotorSimple.Direction.REVERSE);
+        this.wheelBR.setDirection(DcMotorSimple.Direction.FORWARD);
+
         // TODO : Change the names
-        this.odometryXL = new Odometry("odometryXL", hwm);
-        this.odometryXR = new Odometry("odometryXR", hwm);
-        this.odometryY = new Odometry("odometryY", hwm);
+        this.odometryXL = new Odometry("wheelFL", hwm);
+        this.odometryXR = new Odometry("wheelFR", hwm);
+        this.odometryY = new Odometry("wheelBL", hwm);
+        this.odometryXL.reverse();
+        this.odometryXR.reverse();
+        this.odometryY.reverse();
     }
 
     // Set Commands : Positions and Angles
@@ -93,6 +110,16 @@ public class AutoWheelPart extends Part {
     protected void nextStep() {
         RobotCommand cmd = this.current_command;
         if (cmd == Command.MOVE) {
+            switch(this.step) {
+                case 0:
+                    this.setTarget(2, 0, 180);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
+        else if (cmd == Command.RETURN) {
             switch(this.step) {
                 case 0:
                     this.setTarget(0, 0, 0);
@@ -109,9 +136,9 @@ public class AutoWheelPart extends Part {
         // Position Calculation (By using Odometry)
         // TODO : Change the formulas (Fit to the robot) + Add IMU
         double dxl_odm, dxr_odm, dy_odm;
-        dxl_odm = (double)this.odometryXL.getTick() * TILE_RATIO;
-        dxr_odm = (double)this.odometryXR.getTick() * TILE_RATIO;
-        dy_odm = (double)this.odometryY.getTick() * TILE_RATIO;
+        dxl_odm = (double)this.odometryXL.getDeltaTick() * TILE_RATIO;
+        dxr_odm = (double)this.odometryXR.getDeltaTick() * TILE_RATIO;
+        dy_odm = (double)this.odometryY.getDeltaTick() * TILE_RATIO;
 
         double dx, dy, dtheta;
 
@@ -119,10 +146,22 @@ public class AutoWheelPart extends Part {
         dy = dy_odm - (dxr_odm - dxl_odm) / 2.0 / X_OFFSET * Y_OFFSET;
         dtheta = (dxr_odm - dxl_odm) / 2.0 / X_OFFSET;
 
+        this.current.x = this.current.x + dx * Math.cos(dtheta) - dy * Math.sin(dtheta);
+        this.current.y = this.current.y + dx * Math.sin(dtheta) + dy * Math.cos(dtheta);
+        this.current.theta = this.current.theta + dtheta;
+
         double delta_x, delta_y, delta_theta;
-        delta_x = this.target.x - dx;
-        delta_y = this.target.y - dy;
-        delta_theta = this.target.theta - dtheta;
+        delta_x = this.target.x - this.current.x;
+        delta_y = this.target.y - this.current.y;
+        delta_theta = this.target.theta - this.current.theta;
+
+        telemetry.addData("Target X", this.target.x);
+        telemetry.addData("Target Y", this.target.y);
+        telemetry.addData("Target Theta", this.target.theta);
+        telemetry.addData("Current X", this.current.x);
+        telemetry.addData("Current Y", this.current.y);
+        telemetry.addData("Current Theta", this.current.theta);
+
 
         // Mecanum Wheel Movement Calculation (https://ecam-eurobot.github.io/Tutorials/mechanical/mecanum.html)
 
@@ -132,20 +171,24 @@ public class AutoWheelPart extends Part {
         w = delta_theta;
 
         double abs_v = Math.abs(vx) + Math.abs(vy) + Math.abs(w * ROTATION_SPEED_FACTOR);
-        if (abs_v > 1.0) {
+        if (abs_v > 0.7) {
             vx /= abs_v;
             vy /= abs_v;
             w /= abs_v;
         }
 
-        this.wheelFL.move(vx - vy - w * ROTATION_SPEED_FACTOR);
-        this.wheelFR.move(vx + vy + w * ROTATION_SPEED_FACTOR);
-        this.wheelBL.move(vx + vy - w * ROTATION_SPEED_FACTOR);
-        this.wheelBR.move(vx - vy + w * ROTATION_SPEED_FACTOR);
+        double wheel_speed_FL = (vx + vy - w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
+        double wheel_speed_FR = (vx - vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
+        double wheel_speed_BL = (vx - vy - w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
+        double wheel_speed_BR = (vx + vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
+        this.wheelFL.move( wheel_speed_FL + 0.1 * (wheel_speed_FL > 0 ? 1.0 : -1.0));
+        this.wheelFR.move( wheel_speed_FR + 0.1 * (wheel_speed_FR > 0 ? 1.0 : -1.0));
+        this.wheelBL.move( wheel_speed_BL + 0.1 * (wheel_speed_BL > 0 ? 1.0 : -1.0));
+        this.wheelBR.move( wheel_speed_BR + 0.1 * (wheel_speed_BR > 0 ? 1.0 : -1.0));
 
         // Check if the robot reached the target
 
-        double ABLE_ANGLE_ERROR = 0.1;
+        double ABLE_ANGLE_ERROR = 0.005;
         if (Math.abs(delta_x) < ABLE_DISTANCE_ERROR
                 && Math.abs(delta_y) < ABLE_DISTANCE_ERROR
                 && Math.abs(delta_theta) < ABLE_ANGLE_ERROR) {
@@ -154,8 +197,12 @@ public class AutoWheelPart extends Part {
             this.wheelBL.stop();
             this.wheelBR.stop();
 
-            this.step++;
-            this.nextStep();
+            this.stop_counter++;
+            if (this.stop_counter > STOP_LIMIT) {
+                this.step++;
+                this.nextStep();
+                this.stop_counter = 0;
+            }
         }
     }
 }
