@@ -63,13 +63,14 @@ public class AutoWheelPart extends Part {
 
     // Constants
     // TODO : Change the values
-    private final double X_OFFSET = 0.246;
-    private final double Y_OFFSET = 0.265;
+    private final double X_OFFSET = 0.241;
+    private final double Y_OFFSET = 0.25;
     private final double TILE_RATIO = 0.000124;
-    private final double ABLE_DISTANCE_ERROR = 0.1;
-    private final double ROTATION_SPEED_FACTOR = 0.7; // X length + Y length
+    private final double ABLE_DISTANCE_ERROR = 0.005;
+    private final double ABLE_ANGLE_ERROR = 0.005;
+    private final double ROTATION_SPEED_FACTOR = X_OFFSET + Y_OFFSET;
     private final double SPEED_FACTOR = 0.5;
-    private final int STOP_LIMIT = 100;
+    private final int STOP_LIMIT = 50;
 
     private int stop_counter = 0;
 
@@ -112,7 +113,7 @@ public class AutoWheelPart extends Part {
         if (cmd == Command.MOVE) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(2, 0, 180);
+                    this.setTarget(0, 2, 180);
                     break;
                 case 1:
                     this.finishStep();
@@ -143,12 +144,12 @@ public class AutoWheelPart extends Part {
         double dx, dy, dtheta;
 
         dx = (dxl_odm + dxr_odm) / 2.0;
-        dy = dy_odm - (dxr_odm - dxl_odm) / 2.0 / X_OFFSET * Y_OFFSET;
+        dy = dy_odm + (dxr_odm - dxl_odm) / 2.0 / X_OFFSET * Y_OFFSET;
         dtheta = (dxr_odm - dxl_odm) / 2.0 / X_OFFSET;
 
-        this.current.x = this.current.x + dx * Math.cos(dtheta) - dy * Math.sin(dtheta);
-        this.current.y = this.current.y + dx * Math.sin(dtheta) + dy * Math.cos(dtheta);
-        this.current.theta = this.current.theta + dtheta;
+        this.current.x += dx * Math.cos(this.current.theta) + dy * Math.sin(this.current.theta);
+        this.current.y += dx * Math.sin(this.current.theta) + dy * Math.cos(this.current.theta);
+        this.current.theta += dtheta;
 
         double delta_x, delta_y, delta_theta;
         delta_x = this.target.x - this.current.x;
@@ -166,12 +167,12 @@ public class AutoWheelPart extends Part {
         // Mecanum Wheel Movement Calculation (https://ecam-eurobot.github.io/Tutorials/mechanical/mecanum.html)
 
         double vx, vy, w;
-        vx = delta_x;
-        vy = delta_y;
+        vx = delta_x * Math.cos(this.current.theta) + delta_y * Math.sin(this.current.theta);
+        vy = delta_x * Math.sin(this.current.theta) + delta_y * Math.cos(this.current.theta);
         w = delta_theta;
 
         double abs_v = Math.abs(vx) + Math.abs(vy) + Math.abs(w * ROTATION_SPEED_FACTOR);
-        if (abs_v > 0.7) {
+        if (abs_v > 1.0) {
             vx /= abs_v;
             vy /= abs_v;
             w /= abs_v;
@@ -181,14 +182,13 @@ public class AutoWheelPart extends Part {
         double wheel_speed_FR = (vx - vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
         double wheel_speed_BL = (vx - vy - w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
         double wheel_speed_BR = (vx + vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
-        this.wheelFL.move( wheel_speed_FL + 0.1 * (wheel_speed_FL > 0 ? 1.0 : -1.0));
-        this.wheelFR.move( wheel_speed_FR + 0.1 * (wheel_speed_FR > 0 ? 1.0 : -1.0));
-        this.wheelBL.move( wheel_speed_BL + 0.1 * (wheel_speed_BL > 0 ? 1.0 : -1.0));
-        this.wheelBR.move( wheel_speed_BR + 0.1 * (wheel_speed_BR > 0 ? 1.0 : -1.0));
+        this.wheelFL.move( wheel_speed_FL * 0.9 + 0.1 * (wheel_speed_FL > 0 ? 1.0 : -1.0));
+        this.wheelFR.move( wheel_speed_FR * 0.9 + 0.1 * (wheel_speed_FR > 0 ? 1.0 : -1.0));
+        this.wheelBL.move( wheel_speed_BL * 0.9 + 0.1 * (wheel_speed_BL > 0 ? 1.0 : -1.0));
+        this.wheelBR.move( wheel_speed_BR * 0.9 + 0.1 * (wheel_speed_BR > 0 ? 1.0 : -1.0));
 
         // Check if the robot reached the target
 
-        double ABLE_ANGLE_ERROR = 0.005;
         if (Math.abs(delta_x) < ABLE_DISTANCE_ERROR
                 && Math.abs(delta_y) < ABLE_DISTANCE_ERROR
                 && Math.abs(delta_theta) < ABLE_ANGLE_ERROR) {
