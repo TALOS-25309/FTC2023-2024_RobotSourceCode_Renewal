@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.hardware;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.part.HardwareManager;
 
 public abstract class Hardware {
     protected Telemetry telemetry;

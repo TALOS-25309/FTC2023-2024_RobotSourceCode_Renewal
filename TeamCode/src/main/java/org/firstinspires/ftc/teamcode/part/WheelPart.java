@@ -10,17 +10,10 @@ import org.firstinspires.ftc.teamcode.hardware.DistSensorHW;
 
 public class WheelPart extends Part {
     // FR: Front-Right, FL: Front-Left, BR: Back-Right, BL: Back-Left
-    public DcMotorHW wheelFR, wheelFL, wheelBR, wheelBL;
-    DistSensorHW backboard_dist_sensor;
+    private final DcMotorHW wheelFR, wheelFL, wheelBR, wheelBL;
 
-    private final double length_of_robot = 28.0;
-    private final double length_of_pincer = 28.0;
-    private final double height_of_wheel = 8.0;
-    private final double angle_of_backboard = 62.0;
-    private final double angle_of_linear = 53.0;
-
-    private double backboard_dist = 0.0;
-    private boolean use_auto = false;
+    private double wheelSpeed = 0.5;
+    private double wheelSpeedFast = 1.0;
 
     public enum Command implements RobotCommand {
         MOVE_FORWARD,
@@ -60,9 +53,6 @@ public class WheelPart extends Part {
         }
     }
 
-    public double wheelSpeed = 0.5;
-    public double wheelSpeedFast = 1.0;
-
     public void setTeleWheelSpeed() {
         this.wheelSpeed = 0.2;
     }
@@ -74,8 +64,6 @@ public class WheelPart extends Part {
         this.wheelFL = new DcMotorHW("wheelFL", hwm, tel);
         this.wheelBR = new DcMotorHW("wheelBR", hwm, tel);
         this.wheelBL = new DcMotorHW("wheelBL", hwm, tel);
-
-        this.backboard_dist_sensor = new DistSensorHW("backboard", hwm, tel);
 
         wheelFR.setUsingBrake(true).setUsingEncoder(false).setDirection(DcMotorSimple.Direction.FORWARD);
         wheelFL.setUsingBrake(true).setUsingEncoder(false).setDirection(DcMotorSimple.Direction.REVERSE);
@@ -90,7 +78,6 @@ public class WheelPart extends Part {
 
         this.hardware_manager.registerHardware(this.wheelFR).registerHardware(this.wheelFL);
         this.hardware_manager.registerHardware(this.wheelBR).registerHardware(this.wheelBL);
-        this.hardware_manager.registerHardware(this.backboard_dist_sensor);
     }
 
     public void stop() {
@@ -125,39 +112,8 @@ public class WheelPart extends Part {
         this.wheelBR.move(this.wheelSpeedFast * flbr_factor);
     }
 
-    public void onAutoDistance() {
-        this.use_auto = true;
-    }
-
-    public void offAutoDistance() {
-        this.use_auto = false;
-    }
-
     public void update(double linear_length) {
         super.update();
-        if (this.use_auto && this.backboard_dist > 2.0){
-            double D2 = this.length_of_pincer;
-            double D3 = this.length_of_robot;
-            double d2 = linear_length * Math.cos(Math.toRadians(this.angle_of_linear));
-            double d1 = (linear_length * Math.sin(Math.toRadians(this.angle_of_linear)) + this.height_of_wheel)
-                    / Math.tan(Math.toRadians(this.angle_of_backboard));
-            this.backboard_dist = D2-D3+d2-d1;
-            double cur_dist = this.backboard_dist_sensor.getDistance();
-
-            double range = 0.5;
-            if (this.backboard_dist > cur_dist + range) {
-                double f = this.backboard_dist - (cur_dist + range);
-                f /= 5.0;
-                if (f > 1.0) f = 1.0;
-                this.move(wheelSpeed * f, Direction.Backward);
-            }
-            else if (this.backboard_dist < cur_dist - range) {
-                double f = cur_dist - range - this.backboard_dist;
-                f /= 5.0;
-                if (f > 1.0) f = 1.0;
-                this.move(wheelSpeed * f, Direction.Forward);
-            }
-        }
     }
 
     @Override
