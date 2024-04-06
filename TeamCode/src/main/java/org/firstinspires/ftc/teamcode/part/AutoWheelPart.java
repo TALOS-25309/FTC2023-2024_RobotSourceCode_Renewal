@@ -11,6 +11,7 @@ class Odometry {
     private final DcMotor odometry;
     private int sign = 1;
     private int last_tick = 0;
+    public static int pixelCount = 0;
     public Odometry(String name, HardwareMap hwm) {
         this.odometry = hwm.get(DcMotor.class, name);
         this.odometry.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -60,6 +61,7 @@ public class AutoWheelPart extends Part {
     private final RobotPosition current = new RobotPosition(0, 0, 0);
     private final Wheel wheelFR, wheelFL, wheelBR, wheelBL;
     private final Odometry odometryXL, odometryXR, odometryY;
+    public double pixelPos = 0;
 
     // Constants
     // TODO : Change the values
@@ -82,6 +84,13 @@ public class AutoWheelPart extends Part {
 
     public enum Command implements RobotCommand {
         MOVE,
+        MOVE_DETECT_POS,
+        DROP_RIGHT,
+        DROP_LEFT,
+        DROP_FRONT,
+        MOVE_BACKDROP,
+        MOVE_PIXEL,
+        PARK,
         RETURN
     }
     public AutoWheelPart(HardwareMap hwm, Telemetry tel) {
@@ -114,6 +123,76 @@ public class AutoWheelPart extends Part {
             switch(this.step) {
                 case 0:
                     this.setTarget(0, 2, 180);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
+        else if (cmd == Command.MOVE_DETECT_POS) {
+            switch(this.step) {
+                case 0:
+                    this.setTarget(0, 2, 0);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
+        else if (cmd == Command.DROP_LEFT) {
+            switch(this.step) {
+                case 0:
+                    this.setTarget(0, 2, -90);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
+        else if (cmd == Command.DROP_FRONT) {
+            switch(this.step) {
+                case 0:
+                    this.setTarget(0, 2, 0);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
+        else if (cmd == Command.DROP_RIGHT) {
+            switch(this.step) {
+                case 0:
+                    this.setTarget(0, 2, 90);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
+        else if (cmd == Command.MOVE_BACKDROP) {
+            switch(this.step) {
+                case 0:
+                    this.setTarget(2, 2, 90);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
+        else if (cmd == Command.MOVE_PIXEL) {
+            switch(this.step) {
+                case 0:
+                    this.setTarget(2, 2 - pixelPos, 90);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
+        else if (cmd == Command.PARK) {
+            switch(this.step) {
+                case 0:
+                    this.setTarget(2, 0, -90);
                     break;
                 case 1:
                     this.finishStep();
