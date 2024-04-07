@@ -13,6 +13,8 @@ public class BucketPart extends Part {
     private final CRServoHW bucket_rotor;
 
     private final double CRServo_speed = 1.0;
+    private final double low_position = 0.25;
+    private final double high_position = 0.55;
 
     private boolean is_bucket_up = false;
 
@@ -30,10 +32,10 @@ public class BucketPart extends Part {
         this.bucket_wrist = new ServoHW("bucket_wrist", hwm, tel);
         this.bucket_rotor = new CRServoHW("bucket_rotor", hwm, tel);
 
-        this.bucket_wrist.setDirection(Servo.Direction.FORWARD);
+        this.bucket_wrist.setDirection(Servo.Direction.REVERSE);
         this.bucket_rotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        this.bucket_wrist.setInitialPosition(0.0);
+        this.bucket_wrist.setInitialPosition(low_position);
 
         this.hardware_manager.registerHardware(this.bucket_wrist);
         this.hardware_manager.registerHardware(this.bucket_rotor);
@@ -51,7 +53,7 @@ public class BucketPart extends Part {
                 case 0:
                     this.is_bucket_up = true;
                     this.bucket_rotor.stop();
-                    this.bucket_wrist.moveWithInterval(1.0, 1000);
+                    this.bucket_wrist.moveWithInterval(high_position, 300);
                     break;
                 case 1:
                     this.finishStep();
@@ -61,7 +63,7 @@ public class BucketPart extends Part {
             switch(this.step) {
                 case 0:
                     this.bucket_rotor.stop();
-                    this.bucket_wrist.moveWithInterval(0.0, 1000);
+                    this.bucket_wrist.moveWithInterval(low_position, 300);
                     break;
                 case 1:
                     this.is_bucket_up = false;

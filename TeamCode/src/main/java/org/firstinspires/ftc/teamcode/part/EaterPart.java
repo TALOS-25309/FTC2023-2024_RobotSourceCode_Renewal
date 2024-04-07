@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.part;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -24,7 +25,7 @@ public class EaterPart extends Part {
         this.conveyor = new DcMotorHW("conveyor", hwm, tel);
         this.rotor = new DcMotorHW("rotor", hwm, tel);
 
-        this.conveyor.setDirection(DcMotor.Direction.FORWARD);
+        this.conveyor.setDirection(DcMotor.Direction.REVERSE);
         this.rotor.setDirection(DcMotor.Direction.FORWARD);
 
         this.conveyor.setUsingEncoder(false).setUsingFixation(false).setUsingBrake(false);

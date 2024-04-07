@@ -27,7 +27,8 @@ public class LinearPart extends Part {
         MOVE_PSEUDO_UP_POSITION,
         MOVE_DOWN_POWERFUL,
         MOVE_ORIGINAL_POSITION,
-        MOVE_PSEUDO_END_POSITION
+        MOVE_PSEUDO_END_POSITION,
+        TEST_MOVE
     }
 
     // Constructor
@@ -163,24 +164,31 @@ public class LinearPart extends Part {
                     break;
             }
         }
+        else if (cmd == Command.TEST_MOVE) {
+            switch (this.step) {
+                case 0:
+                    expand = true;
+                    moveLinearWithTargetTicks(linear_speed_go_up, 1500);
+                    break;
+                case 1:
+                    expand = false;
+                    moveLinearWithTargetTicks(linear_speed_go_down, 1500);
+                    break;
+                case 2:
+                    this.finishStep();
+                    break;
+            }
+        }
     }
 
     @Override
     public void update(){
         super.update();
-        if (mag.isActivated()) {
-            expand = true;
-            moveLinear(0.3);
-            linear1.accumulated_moving_distance = 0.0;
-            linear2.accumulated_moving_distance = 0.0;
-            this.correcting_limit = true;
-        }
-        else if (this.correcting_limit) {
+        if (mag.isActivated() && !expand) {
             linear1.stop();
             linear2.stop();
             linear1.accumulated_moving_distance = 0.0;
             linear2.accumulated_moving_distance = 0.0;
-            this.correcting_limit = false;
         }
     }
 
