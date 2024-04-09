@@ -50,6 +50,10 @@ public class LinearPart extends Part {
         linear1.setThisDcAsSynced();
     }
 
+    public boolean isLinearDown() {
+        return mag.isActivated();
+    }
+
     public double getLength() {
         return (linear1.getAccumulatedMovingDistance() + linear2.getAccumulatedMovingDistance()) * 0.5 / 43.0;
     }

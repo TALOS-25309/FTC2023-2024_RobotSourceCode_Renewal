@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.mainop.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.Gamepad;
 
 
 import org.firstinspires.ftc.teamcode.part.AirplanePart;
@@ -104,7 +105,7 @@ public abstract class TeleOpMode_Main extends OpMode {
 
         // Bucket Up and Down
         if (gamepad2.square) {
-            if (this.bucket_part.isBucketUp()) {
+            if (this.bucket_part.isBucketUp() && this.linear_part.isLinearDown()) {
                 this.bucket_part.startStep(BucketPart.Command.BUCKET_DOWN);
             } else {
                 this.bucket_part.startStep(BucketPart.Command.BUCKET_UP);
@@ -121,7 +122,7 @@ public abstract class TeleOpMode_Main extends OpMode {
             this.bucket_part.startStep(BucketPart.Command.STOP);
         }
 
-        if (gamepad2.circle && !this.bucket_part.isBucketUp()) {
+        if (gamepad2.circle && !this.bucket_part.isBucketUp() && this.linear_part.isLinearDown()) {
             this.eater_part.startStep(EaterPart.Command.MOVE_UP);
         } else if (gamepad2.cross) {
             this.eater_part.startStep(EaterPart.Command.MOVE_DOWN);
@@ -140,6 +141,8 @@ public abstract class TeleOpMode_Main extends OpMode {
             if (gamepad1.touchpad && gamepad2.touchpad) {
                 // NORMAL STATE
                 this.is_emergency_mode = false;
+                gamepad1.setLedColor(0, 0, 1.0, Gamepad.LED_DURATION_CONTINUOUS);
+                gamepad2.setLedColor(1.0, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
                 this.gamepad1.rumble(100);
                 this.gamepad2.rumble(100);
             }
@@ -154,6 +157,8 @@ public abstract class TeleOpMode_Main extends OpMode {
                 this.wheel_part.emergencyStop();
                 this.bucket_part.emergencyStop();
                 this.eater_part.emergencyStop();
+                gamepad1.setLedColor(1.0, 0.5, 0, Gamepad.LED_DURATION_CONTINUOUS);
+                gamepad2.setLedColor(1.0, 0.5, 0, Gamepad.LED_DURATION_CONTINUOUS);
                 this.gamepad1.rumble(500);
                 this.gamepad2.rumble(500);
             }
