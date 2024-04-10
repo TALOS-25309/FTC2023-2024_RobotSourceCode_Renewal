@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.hardware.DcMotorHW;
 public class EaterPart extends Part {
     private final DcMotorHW conveyor, rotor;
     private final double conveyor_speed = 1.0;
-    private final double rotor_speed = 0.5;
+    private final double rotor_speed = 0.35;
 
     public enum Command implements RobotCommand {
         MOVE_UP,
