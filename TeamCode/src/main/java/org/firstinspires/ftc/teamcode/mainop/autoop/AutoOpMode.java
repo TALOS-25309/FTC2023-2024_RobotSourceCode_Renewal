@@ -18,6 +18,8 @@ public class AutoOpMode extends LinearOpMode {
     public WheelPart wheel_part;
     public AutoWheelPart awheel_part;
     public BucketPart bucket_part;
+    public double pixelDist = 0;
+
     public DistSensorHW dist_front_1, dist_front_2, dist_right_1, dist_right_2;
 
     protected RobotCommand current_command = Part.Command.NONE;
@@ -52,7 +54,8 @@ public class AutoOpMode extends LinearOpMode {
 
     public void initAutoOp() {
         this.linear_part = new LinearPart(hardwareMap, telemetry);
-        this.wheel_part = new WheelPart(hardwareMap, telemetry);
+        this.awheel_part = new AutoWheelPart(hardwareMap, telemetry);
+        this.bucket_part = new BucketPart(hardwareMap, telemetry);
 
         dist_front_1 = new DistSensorHW("dist_front_1", hardwareMap, telemetry);
         dist_front_2 = new DistSensorHW("dist_front_2", hardwareMap, telemetry);
@@ -82,7 +85,8 @@ public class AutoOpMode extends LinearOpMode {
         // loop
         while (true) {
             this.linear_part.update();
-            this.wheel_part.update();
+            this.awheel_part.update();
+            this.bucket_part.update();
             this.update();
 
             this.telemetry.update();
@@ -112,11 +116,12 @@ public class AutoOpMode extends LinearOpMode {
     }
 
     public void nextStep() {
-        double pixelDist = 0;
         RobotCommand cmd = this.current_command;
         if (cmd == Command.RESET) {
             switch (this.step) {
                 case 0:
+                    bucket_part.startStep(BucketPart.Command.BUCKET_DOWN);
+                    linear_part.startStep(LinearPart.Command.MOVE_ORIGINAL_POSITION);
                     break;
                 case 1:
                     this.finishCommand();
@@ -226,7 +231,7 @@ public class AutoOpMode extends LinearOpMode {
 
     // Update the hardware objects of the part and check the step was finished
     public void update(){
-        if(this.linear_part.isFinished() && this.wheel_part.isFinished() && System.currentTimeMillis() > this.delay_time) {
+        if(this.linear_part.isFinished() && this.awheel_part.isFinished() && this.bucket_part.isFinished() && System.currentTimeMillis() > this.delay_time) {
             this.changeToTheNextStep();
         }
     }
