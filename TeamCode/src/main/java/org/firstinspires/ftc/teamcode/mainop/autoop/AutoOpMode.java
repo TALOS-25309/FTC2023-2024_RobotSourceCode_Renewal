@@ -15,7 +15,6 @@ import org.firstinspires.ftc.teamcode.part.AutoWheelPart;
 @Autonomous(name = "[BLUE] AutoOpMode", group = "")
 public class AutoOpMode extends LinearOpMode {
     public LinearPart linear_part;
-    public WheelPart wheel_part;
     public AutoWheelPart awheel_part;
     public BucketPart bucket_part;
     public double pixelDist = 0;
@@ -76,9 +75,9 @@ public class AutoOpMode extends LinearOpMode {
         // Command Procedure
         Command[] command_procedure = {
                 Command.RESET,
-                /* 1. */ Command.DETECT_PIXELS,
-                /* 2. */ Command.DROP_PIXELS,
-                /* 3. */ Command.PARK
+                /* 1. */ Command.DETECT_PIXELS
+                /* 2. */ //Command.DROP_PIXELS,
+                /* 3. */ //Command.PARK
         };
         int procedure_step = -1;
 
@@ -130,11 +129,13 @@ public class AutoOpMode extends LinearOpMode {
         } else if (cmd == Command.DETECT_PIXELS) {
             switch (this.step) {
                 case 0:
+                    telemetry.addLine("DETEC_PIXELS [0]");
                     // move until object is detected
                     // use color sensor
                     awheel_part.startStep(AutoWheelPart.Command.MOVE_DETECT_POS);
                     break;
                 case 1:
+                    telemetry.addLine("DETEC_PIXELS [1]");
                     if (isObjectDetected("left")) {
                         pixelPos = "left";
                         pixelDist = 2;
@@ -147,6 +148,7 @@ public class AutoOpMode extends LinearOpMode {
                     }
                     break;
                 case 2:
+                    telemetry.addLine("DETEC_PIXELS [2]");
                     // turn to position to drop pixel
                     if (pixelPos == "left") {
                         // turn left
@@ -154,6 +156,9 @@ public class AutoOpMode extends LinearOpMode {
                     } else if (pixelPos == "right") {
                         // turn right
                         awheel_part.startStep(AutoWheelPart.Command.DROP_RIGHT);
+                    } else {
+                        // front
+                        awheel_part.startStep(AutoWheelPart.Command.DROP_FRONT);
                     }
                     break;
                 case 3:
@@ -161,16 +166,8 @@ public class AutoOpMode extends LinearOpMode {
                     break;
                 case 4:
                     // turn to original position
-                    if (pixelPos == "front") {
-                        // turn left
-                        awheel_part.startStep(AutoWheelPart.Command.DROP_FRONT);
-                    }
-                    else if (pixelPos == "right") {
-                        // turn 180deg
-                        awheel_part.startStep(AutoWheelPart.Command.DROP_RIGHT);
-                    }
-                    break;
                 case 5:
+                    telemetry.addLine("DETEC_PIXELS [5]");
                     this.finishCommand();
                     break;
             }
@@ -231,6 +228,7 @@ public class AutoOpMode extends LinearOpMode {
 
     // Update the hardware objects of the part and check the step was finished
     public void update(){
+        telemetry.update();
         if(this.linear_part.isFinished() && this.awheel_part.isFinished() && this.bucket_part.isFinished() && System.currentTimeMillis() > this.delay_time) {
             this.changeToTheNextStep();
         }

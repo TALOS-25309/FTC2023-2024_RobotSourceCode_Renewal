@@ -107,9 +107,9 @@ public class AutoWheelPart extends Part {
         this.wheelBR.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // TODO : Change the names
-        this.odometryXL = new Odometry("wheelFL", hwm);
+        this.odometryXL = new Odometry("wheelBL", hwm);
         this.odometryXR = new Odometry("wheelFR", hwm);
-        this.odometryY = new Odometry("wheelBL", hwm);
+        this.odometryY = new Odometry("wheelBR", hwm);
         this.odometryXL.reverse();
         this.odometryXR.reverse();
         this.odometryY.reverse();
@@ -122,7 +122,7 @@ public class AutoWheelPart extends Part {
         if (cmd == Command.MOVE) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(0, 2, 180);
+                    //this.setTarget(0, 2, 180);
                     break;
                 case 1:
                     this.finishStep();
@@ -132,7 +132,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.MOVE_DETECT_POS) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(0, 2, 0);
+                    this.setTarget(2,0, 0);
                     break;
                 case 1:
                     this.finishStep();
@@ -142,7 +142,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.DROP_LEFT) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(0, 2, -90);
+                    //this.setTarget(2, 0, 270);
                     break;
                 case 1:
                     this.finishStep();
@@ -152,7 +152,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.DROP_FRONT) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(0, 2, 0);
+                    //this.setTarget(2, 0, 0);
                     break;
                 case 1:
                     this.finishStep();
@@ -162,7 +162,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.DROP_RIGHT) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(0, 2, 90);
+                    //this.setTarget(2, 0, 90);
                     break;
                 case 1:
                     this.finishStep();
@@ -172,9 +172,11 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.MOVE_BACKDROP) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(2, 2, 90);
-                    break;
+                    //this.setTarget(2, 0, -90);
                 case 1:
+                    //this.setTarget(2, 2, -90);
+                    break;
+                case 2:
                     this.finishStep();
                     break;
             }
@@ -182,7 +184,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.MOVE_PIXEL) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(2, 2 - pixelPos, 90);
+                    //this.setTarget(2, 2 - pixelPos, -90);
                     break;
                 case 1:
                     this.finishStep();
@@ -192,7 +194,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.PARK) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(2, 0, -90);
+                    //this.setTarget(2, 0, -90);
                     break;
                 case 1:
                     this.finishStep();
@@ -202,7 +204,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.RETURN) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(0, 0, 0);
+                    //this.setTarget(0, 0, 0);
                     break;
                 case 1:
                     this.finishStep();
