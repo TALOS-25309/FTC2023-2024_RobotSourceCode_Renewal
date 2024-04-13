@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.hardware.DistSensorHW;
 import org.firstinspires.ftc.teamcode.part.BucketPart;
+import org.firstinspires.ftc.teamcode.part.EaterPart;
 import org.firstinspires.ftc.teamcode.part.LinearPart;
 import org.firstinspires.ftc.teamcode.part.Part;
 import org.firstinspires.ftc.teamcode.part.RobotCommand;
@@ -17,6 +18,7 @@ public class AutoOpMode extends LinearOpMode {
     public LinearPart linear_part;
     public AutoWheelPart awheel_part;
     public BucketPart bucket_part;
+    public EaterPart eater_part;
     public double pixelDist = 0;
 
     public DistSensorHW dist_front_1, dist_front_2, dist_right_1, dist_right_2;
@@ -55,6 +57,7 @@ public class AutoOpMode extends LinearOpMode {
         this.linear_part = new LinearPart(hardwareMap, telemetry);
         this.awheel_part = new AutoWheelPart(hardwareMap, telemetry);
         this.bucket_part = new BucketPart(hardwareMap, telemetry);
+        this.eater_part = new EaterPart(hardwareMap, telemetry);
 
         dist_front_1 = new DistSensorHW("dist_front_1", hardwareMap, telemetry);
         dist_front_2 = new DistSensorHW("dist_front_2", hardwareMap, telemetry);
@@ -75,9 +78,9 @@ public class AutoOpMode extends LinearOpMode {
         // Command Procedure
         Command[] command_procedure = {
                 Command.RESET,
-                /* 1. */ Command.DETECT_PIXELS
-                /* 2. */ //Command.DROP_PIXELS,
-                /* 3. */ //Command.PARK
+                /* 1. */ Command.DETECT_PIXELS,
+                /* 2. */ Command.DROP_PIXELS,
+                /* 3. */ Command.PARK
         };
         int procedure_step = -1;
 
@@ -86,6 +89,7 @@ public class AutoOpMode extends LinearOpMode {
             this.linear_part.update();
             this.awheel_part.update();
             this.bucket_part.update();
+            this.eater_part.update();
             this.update();
 
             this.telemetry.update();
@@ -136,18 +140,20 @@ public class AutoOpMode extends LinearOpMode {
                     break;
                 case 1:
                     telemetry.addLine("DETEC_PIXELS [1]");
-                    if (isObjectDetected("left")) {
-                        pixelPos = "left";
-                        pixelDist = 2;
+                    if (isObjectDetected("front")) {
+                        pixelPos = "front";
+                        pixelDist = 1;
                     } else if (isObjectDetected("right")) {
                         pixelPos = "right";
-                        pixelDist = 1;
+                        pixelDist = -1.6;
                     } else {
-                        pixelPos = "front";
-                        pixelDist = 0;
+                        pixelPos = "left";
+                        pixelDist = 2;
                     }
-                    break;
-                case 2:
+                    pixelPos = "right";
+                    pixelDist = -1.6;
+
+                case 4:
                     telemetry.addLine("DETEC_PIXELS [2]");
                     // turn to position to drop pixel
                     if (pixelPos == "left") {
@@ -161,12 +167,12 @@ public class AutoOpMode extends LinearOpMode {
                         awheel_part.startStep(AutoWheelPart.Command.DROP_FRONT);
                     }
                     break;
-                case 3:
-                    // drop pixel
-                    break;
-                case 4:
-                    // turn to original position
                 case 5:
+                    eater_part.startStep(EaterPart.Command.MOVE_DOWN);
+                    delayTime(2000);
+                    break;
+                case 6:
+                    eater_part.startStep(EaterPart.Command.STOP);
                     telemetry.addLine("DETEC_PIXELS [5]");
                     this.finishCommand();
                     break;
@@ -189,11 +195,12 @@ public class AutoOpMode extends LinearOpMode {
                     break;
                 case 3:
                     // extend linear
-                    linear_part.startStep(LinearPart.Command.MOVE_DROP_POSITION);
+                    linear_part.startStep(LinearPart.Command.MOVE_AUTO_POSITION);
                     break;
                 case 4:
                     // drop pixel
                     bucket_part.startStep(BucketPart.Command.BUCKET_OUT);
+                    delayTime(2000);
                     break;
                 case 5:
                     // move to park position
@@ -210,6 +217,9 @@ public class AutoOpMode extends LinearOpMode {
                     awheel_part.startStep(AutoWheelPart.Command.PARK);
                     break;
                 case 1:
+                    linear_part.startStep(LinearPart.Command.MOVE_AUTO_ORIGINAL_POSITION);
+                    break;
+                case 2:
                     this.finishCommand();
                     break;
             }
@@ -229,7 +239,7 @@ public class AutoOpMode extends LinearOpMode {
     // Update the hardware objects of the part and check the step was finished
     public void update(){
         telemetry.update();
-        if(this.linear_part.isFinished() && this.awheel_part.isFinished() && this.bucket_part.isFinished() && System.currentTimeMillis() > this.delay_time) {
+        if(this.linear_part.isFinished() && this.eater_part.isFinished() && this.awheel_part.isFinished() && this.bucket_part.isFinished() && System.currentTimeMillis() > this.delay_time) {
             this.changeToTheNextStep();
         }
     }

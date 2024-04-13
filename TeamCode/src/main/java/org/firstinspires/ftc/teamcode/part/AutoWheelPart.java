@@ -62,6 +62,8 @@ public class AutoWheelPart extends Part {
     private final Wheel wheelFR, wheelFL, wheelBR, wheelBL;
     private final Odometry odometryXL, odometryXR, odometryY;
     public double pixelPos = 0;
+    public double backdropY = 1.65;
+    public double detectX = 1.1;
 
     // Constants
     // TODO : Change the values
@@ -69,10 +71,10 @@ public class AutoWheelPart extends Part {
     private final double Y_OFFSET = 0.25;
     private final double TILE_RATIO = 0.000124;
     private final double ABLE_DISTANCE_ERROR = 0.005;
-    private final double ABLE_ANGLE_ERROR = 0.005;
+    private final double ABLE_ANGLE_ERROR = 0.05;
     private final double ROTATION_SPEED_FACTOR = X_OFFSET + Y_OFFSET;
     private final double SPEED_FACTOR = 0.5;
-    private final int STOP_LIMIT = 50;
+    private final int STOP_LIMIT = 10;
 
     private int stop_counter = 0;
 
@@ -112,7 +114,7 @@ public class AutoWheelPart extends Part {
         this.odometryY = new Odometry("wheelBR", hwm);
         this.odometryXL.reverse();
         this.odometryXR.reverse();
-        this.odometryY.reverse();
+        // this.odometryY.reverse();
     }
 
     // Set Commands : Positions and Angles
@@ -122,7 +124,7 @@ public class AutoWheelPart extends Part {
         if (cmd == Command.MOVE) {
             switch(this.step) {
                 case 0:
-                    //this.setTarget(0, 2, 180);
+                    this.setTarget(0, 2, 180);
                     break;
                 case 1:
                     this.finishStep();
@@ -132,7 +134,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.MOVE_DETECT_POS) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(2,0, 0);
+                    this.setTarget(detectX,0, 0);
                     break;
                 case 1:
                     this.finishStep();
@@ -142,7 +144,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.DROP_LEFT) {
             switch(this.step) {
                 case 0:
-                    //this.setTarget(2, 0, 270);
+                    this.setTarget(detectX, 0, -90);
                     break;
                 case 1:
                     this.finishStep();
@@ -152,7 +154,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.DROP_FRONT) {
             switch(this.step) {
                 case 0:
-                    //this.setTarget(2, 0, 0);
+                    this.setTarget(detectX, 0, 180);
                     break;
                 case 1:
                     this.finishStep();
@@ -162,7 +164,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.DROP_RIGHT) {
             switch(this.step) {
                 case 0:
-                    //this.setTarget(2, 0, 90);
+                    this.setTarget(detectX, 0, 90);
                     break;
                 case 1:
                     this.finishStep();
@@ -172,9 +174,10 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.MOVE_BACKDROP) {
             switch(this.step) {
                 case 0:
-                    //this.setTarget(2, 0, -90);
+                    this.setTarget(detectX, 0, 90);
+                    break;
                 case 1:
-                    //this.setTarget(2, 2, -90);
+                    this.setTarget(detectX, backdropY, 90);
                     break;
                 case 2:
                     this.finishStep();
@@ -184,7 +187,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.MOVE_PIXEL) {
             switch(this.step) {
                 case 0:
-                    //this.setTarget(2, 2 - pixelPos, -90);
+                    this.setTarget(detectX - pixelPos, backdropY, 90);
                     break;
                 case 1:
                     this.finishStep();
@@ -194,7 +197,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.PARK) {
             switch(this.step) {
                 case 0:
-                    //this.setTarget(2, 0, -90);
+                    this.setTarget(0, backdropY, 90);
                     break;
                 case 1:
                     this.finishStep();
@@ -204,7 +207,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.RETURN) {
             switch(this.step) {
                 case 0:
-                    //this.setTarget(0, 0, 0);
+                    this.setTarget(0, 0, 0);
                     break;
                 case 1:
                     this.finishStep();
@@ -228,7 +231,7 @@ public class AutoWheelPart extends Part {
         dy = dy_odm + (dxr_odm - dxl_odm) / 2.0 / X_OFFSET * Y_OFFSET;
         dtheta = (dxr_odm - dxl_odm) / 2.0 / X_OFFSET;
 
-        this.current.x += dx * Math.cos(this.current.theta) + dy * Math.sin(this.current.theta);
+        this.current.x += dx * Math.cos(this.current.theta) - dy * Math.sin(this.current.theta);
         this.current.y += dx * Math.sin(this.current.theta) + dy * Math.cos(this.current.theta);
         this.current.theta += dtheta;
 
@@ -263,10 +266,10 @@ public class AutoWheelPart extends Part {
         double wheel_speed_FR = (vx - vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
         double wheel_speed_BL = (vx - vy - w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
         double wheel_speed_BR = (vx + vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR;
-        this.wheelFL.move( wheel_speed_FL * 0.9 + 0.1 * (wheel_speed_FL > 0 ? 1.0 : -1.0));
-        this.wheelFR.move( wheel_speed_FR * 0.9 + 0.1 * (wheel_speed_FR > 0 ? 1.0 : -1.0));
-        this.wheelBL.move( wheel_speed_BL * 0.9 + 0.1 * (wheel_speed_BL > 0 ? 1.0 : -1.0));
-        this.wheelBR.move( wheel_speed_BR * 0.9 + 0.1 * (wheel_speed_BR > 0 ? 1.0 : -1.0));
+        this.wheelFL.move( wheel_speed_FL * 0.7 + 0.15 * (wheel_speed_FL > 0 ? 1.0 : -1.0));
+        this.wheelFR.move( wheel_speed_FR * 0.7 + 0.15 * (wheel_speed_FR > 0 ? 1.0 : -1.0));
+        this.wheelBL.move( wheel_speed_BL * 0.7 + 0.15 * (wheel_speed_BL > 0 ? 1.0 : -1.0));
+        this.wheelBR.move( wheel_speed_BR * 0.7 + 0.15 * (wheel_speed_BR > 0 ? 1.0 : -1.0));
 
         // Check if the robot reached the target
 

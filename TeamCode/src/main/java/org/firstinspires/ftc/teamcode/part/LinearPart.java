@@ -27,8 +27,10 @@ public class LinearPart extends Part {
         MOVE_PSEUDO_UP_POSITION,
         MOVE_DOWN_POWERFUL,
         MOVE_ORIGINAL_POSITION,
+        MOVE_AUTO_ORIGINAL_POSITION,
         MOVE_PSEUDO_END_POSITION,
-        TEST_MOVE
+        TEST_MOVE,
+        MOVE_AUTO_POSITION
     }
 
     // Constructor
@@ -132,6 +134,17 @@ public class LinearPart extends Part {
                     break;
             }
         }
+        else if (cmd == Command.MOVE_AUTO_POSITION) {
+            switch (this.step) {
+                case 0:
+                    expand = true;
+                    moveLinearWithTargetTicks(linear_speed_go_up, 1200);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
         else if (cmd == Command.MOVE_PSEUDO_UP_POSITION) {
             switch (this.step) {
                 case 0:
@@ -162,6 +175,17 @@ public class LinearPart extends Part {
                 case 0:
                     expand = false;
                     moveLinearWithTargetTicks(linear_speed_go_down, dropPosition + upPosition + endPosition);
+                    break;
+                case 1:
+                    this.finishStep();
+                    break;
+            }
+        }
+        else if (cmd == Command.MOVE_AUTO_ORIGINAL_POSITION) {
+            switch (this.step) {
+                case 0:
+                    expand = false;
+                    moveLinearWithTargetTicks(linear_speed_go_down, 1200 + upPosition + endPosition);
                     break;
                 case 1:
                     this.finishStep();
