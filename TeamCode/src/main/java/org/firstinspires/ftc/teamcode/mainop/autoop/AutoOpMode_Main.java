@@ -9,30 +9,30 @@ import org.firstinspires.ftc.teamcode.part.EaterPart;
 import org.firstinspires.ftc.teamcode.part.LinearPart;
 import org.firstinspires.ftc.teamcode.part.Part;
 import org.firstinspires.ftc.teamcode.part.RobotCommand;
-import org.firstinspires.ftc.teamcode.part.WheelPart;
 import org.firstinspires.ftc.teamcode.part.AutoWheelPart;
 
 
-@Autonomous(name = "[BLUE] AutoOpMode", group = "")
-public class AutoOpMode extends LinearOpMode {
-    public LinearPart linear_part;
-    public AutoWheelPart awheel_part;
-    public BucketPart bucket_part;
-    public EaterPart eater_part;
-    public double pixelDist = 0;
+public abstract class AutoOpMode_Main extends LinearOpMode {
+    private LinearPart linear_part;
+    protected AutoWheelPart awheel_part;
+    private BucketPart bucket_part;
+    private EaterPart eater_part;
+    private double pixelDist = 0;
 
-    public DistSensorHW dist_front_1, dist_front_2, dist_right_1, dist_right_2;
+    private DistSensorHW
+            dist_front_1, dist_front_2,
+            dist_right_1, dist_right_2, dist_right_3, dist_right_4;
 
     protected RobotCommand current_command = Part.Command.NONE;
     protected int step = 0;
     private boolean finish = true;
     private long delay_time = 0;
+    private String pixelPos = "default";
 
-    public int robotPixelPos = 0;
-    public String pixelPos = "default";
+    protected abstract void setRobotStartPosition();
 
     public boolean isObjectDetected(String position) {
-        double detectDist = 3;
+        double detectDist = 4;
         switch (position) {
             case "front":
                 if (dist_front_1.getDistance() < detectDist || dist_front_2.getDistance() < detectDist) {
@@ -40,12 +40,15 @@ public class AutoOpMode extends LinearOpMode {
                 }
                 break;
             case "right":
-                if (dist_right_1.getDistance() < detectDist || dist_right_2.getDistance() < detectDist) {
+                if (dist_right_1.getDistance() < detectDist || dist_right_2.getDistance() < detectDist
+                        || dist_right_3.getDistance() < detectDist || dist_right_4.getDistance() < detectDist) {
                     return true;
                 }
                 break;
             case "left":
-                if (dist_right_1.getDistance() > detectDist && dist_right_2.getDistance() > detectDist && dist_front_1.getDistance() > detectDist && dist_front_2.getDistance() > detectDist) {
+                if (dist_right_1.getDistance() > detectDist && dist_right_2.getDistance() > detectDist
+                        && dist_front_1.getDistance() > detectDist && dist_front_2.getDistance() > detectDist
+                        && dist_right_3.getDistance() > detectDist && dist_right_4.getDistance() > detectDist) {
                     return true;
                 }
                 break;
@@ -63,7 +66,8 @@ public class AutoOpMode extends LinearOpMode {
         dist_front_2 = new DistSensorHW("dist_front_2", hardwareMap, telemetry);
         dist_right_1 = new DistSensorHW("dist_right_1", hardwareMap, telemetry);
         dist_right_2 = new DistSensorHW("dist_right_2", hardwareMap, telemetry);
-
+        dist_right_3 = new DistSensorHW("dist_right_3", hardwareMap, telemetry);
+        dist_right_4 = new DistSensorHW("dist_right_4", hardwareMap, telemetry);
     }
 
     @Override
@@ -92,12 +96,27 @@ public class AutoOpMode extends LinearOpMode {
             this.eater_part.update();
             this.update();
 
+
+            this.telemetry.addData("Left : ", isObjectDetected("left"));
+            this.telemetry.addData("Right : ", isObjectDetected("right"));
+            this.telemetry.addData("Front : ", isObjectDetected("front"));
+
+            this.telemetry.addData("SensorValueF1 : ", this.dist_front_1.getDistance());
+            this.telemetry.addData("SensorValueF2 : ", this.dist_front_2.getDistance());
+            this.telemetry.addData("SensorValueR1 : ", this.dist_right_1.getDistance());
+            this.telemetry.addData("SensorValueR2 : ", this.dist_right_2.getDistance());
+            this.telemetry.addData("SensorValueR3 : ", this.dist_right_3.getDistance());
+            this.telemetry.addData("SensorValueR4 : ", this.dist_right_4.getDistance());
+
+
             this.telemetry.update();
 
+            /*
             if (this.isFinished()) {
                 if (++procedure_step >= command_procedure.length) break;
                 this.startStep(command_procedure[procedure_step]);
             }
+            */
         }
     }
 
@@ -133,13 +152,11 @@ public class AutoOpMode extends LinearOpMode {
         } else if (cmd == Command.DETECT_PIXELS) {
             switch (this.step) {
                 case 0:
-                    telemetry.addLine("DETEC_PIXELS [0]");
                     // move until object is detected
                     // use color sensor
-                    awheel_part.startStep(AutoWheelPart.Command.MOVE_DETECT_POS);
+                    awheel_part.startStep(AutoWheelPart.Command. MOVE_DETECT_POS);
                     break;
                 case 1:
-                    telemetry.addLine("DETEC_PIXELS [1]");
                     if (isObjectDetected("front")) {
                         pixelPos = "front";
                         pixelDist = 1;
@@ -150,11 +167,8 @@ public class AutoOpMode extends LinearOpMode {
                         pixelPos = "left";
                         pixelDist = 2;
                     }
-                    pixelPos = "right";
-                    pixelDist = -1.6;
 
                 case 4:
-                    telemetry.addLine("DETEC_PIXELS [2]");
                     // turn to position to drop pixel
                     if (pixelPos == "left") {
                         // turn left
@@ -173,7 +187,6 @@ public class AutoOpMode extends LinearOpMode {
                     break;
                 case 6:
                     eater_part.startStep(EaterPart.Command.STOP);
-                    telemetry.addLine("DETEC_PIXELS [5]");
                     this.finishCommand();
                     break;
             }
@@ -185,7 +198,6 @@ public class AutoOpMode extends LinearOpMode {
                     break;
                 case 1:
                     // move to pixel position
-
                     awheel_part.pixelPos = (0.2 * pixelDist);
                     awheel_part.startStep(AutoWheelPart.Command.MOVE_PIXEL);
                     break;
