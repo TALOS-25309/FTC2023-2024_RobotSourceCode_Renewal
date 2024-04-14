@@ -16,7 +16,7 @@ public class Dist_TestOpMode extends OpMode {
 
     @Override
     public void init() {
-        this.dist1 = new DistSensorHW("dist1", hardwareMap, telemetry);
+        this.dist1 = new DistSensorHW("dist1", hardwareMap, telemetry, false);
     }
 
     @Override

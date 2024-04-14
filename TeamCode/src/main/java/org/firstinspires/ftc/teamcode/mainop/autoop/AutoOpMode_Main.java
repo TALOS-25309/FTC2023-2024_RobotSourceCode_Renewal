@@ -15,6 +15,7 @@ import org.firstinspires.ftc.teamcode.part.AutoWheelPart;
 public abstract class AutoOpMode_Main extends LinearOpMode {
     private LinearPart linear_part;
     protected AutoWheelPart awheel_part;
+    protected AutoWheelPart error_occur;
     private BucketPart bucket_part;
     private EaterPart eater_part;
     private double pixelDist = 0;
@@ -29,10 +30,12 @@ public abstract class AutoOpMode_Main extends LinearOpMode {
     private long delay_time = 0;
     private String pixelPos = "default";
 
-    protected abstract void setRobotStartPosition();
+    protected void setRobotStartPosition() {
+
+    }
 
     public boolean isObjectDetected(String position) {
-        double detectDist = 4;
+        double detectDist = 10;
         switch (position) {
             case "front":
                 if (dist_front_1.getDistance() < detectDist || dist_front_2.getDistance() < detectDist) {
@@ -62,12 +65,12 @@ public abstract class AutoOpMode_Main extends LinearOpMode {
         this.bucket_part = new BucketPart(hardwareMap, telemetry);
         this.eater_part = new EaterPart(hardwareMap, telemetry);
 
-        dist_front_1 = new DistSensorHW("dist_front_1", hardwareMap, telemetry);
-        dist_front_2 = new DistSensorHW("dist_front_2", hardwareMap, telemetry);
-        dist_right_1 = new DistSensorHW("dist_right_1", hardwareMap, telemetry);
-        dist_right_2 = new DistSensorHW("dist_right_2", hardwareMap, telemetry);
-        dist_right_3 = new DistSensorHW("dist_right_3", hardwareMap, telemetry);
-        dist_right_4 = new DistSensorHW("dist_right_4", hardwareMap, telemetry);
+        dist_front_1 = new DistSensorHW("dist_front_1", hardwareMap, telemetry, false);
+        dist_front_2 = new DistSensorHW("dist_front_2", hardwareMap, telemetry, true);
+        dist_right_1 = new DistSensorHW("dist_right_1", hardwareMap, telemetry, true);
+        dist_right_2 = new DistSensorHW("dist_right_2", hardwareMap, telemetry, true);
+        dist_right_3 = new DistSensorHW("dist_right_3", hardwareMap, telemetry, false);
+        dist_right_4 = new DistSensorHW("dist_right_4", hardwareMap, telemetry, true);
     }
 
     @Override
@@ -75,6 +78,8 @@ public abstract class AutoOpMode_Main extends LinearOpMode {
         // init
         this.initAutoOp();
         waitForStart();
+
+        this.setRobotStartPosition();
 
         // start
         // startStep(Command.DETECT_PIXELS);
@@ -96,7 +101,7 @@ public abstract class AutoOpMode_Main extends LinearOpMode {
             this.eater_part.update();
             this.update();
 
-
+            /*
             this.telemetry.addData("Left : ", isObjectDetected("left"));
             this.telemetry.addData("Right : ", isObjectDetected("right"));
             this.telemetry.addData("Front : ", isObjectDetected("front"));
@@ -107,16 +112,16 @@ public abstract class AutoOpMode_Main extends LinearOpMode {
             this.telemetry.addData("SensorValueR2 : ", this.dist_right_2.getDistance());
             this.telemetry.addData("SensorValueR3 : ", this.dist_right_3.getDistance());
             this.telemetry.addData("SensorValueR4 : ", this.dist_right_4.getDistance());
-
+            //*/
 
             this.telemetry.update();
 
-            /*
+            ///*
             if (this.isFinished()) {
                 if (++procedure_step >= command_procedure.length) break;
                 this.startStep(command_procedure[procedure_step]);
             }
-            */
+            //*/
         }
     }
 
@@ -159,13 +164,13 @@ public abstract class AutoOpMode_Main extends LinearOpMode {
                 case 1:
                     if (isObjectDetected("front")) {
                         pixelPos = "front";
-                        pixelDist = 1;
+                        pixelDist = 0;
                     } else if (isObjectDetected("right")) {
                         pixelPos = "right";
-                        pixelDist = -1.6;
+                        pixelDist = -1.2;
                     } else {
                         pixelPos = "left";
-                        pixelDist = 2;
+                        pixelDist = 1.2;
                     }
 
                 case 4:

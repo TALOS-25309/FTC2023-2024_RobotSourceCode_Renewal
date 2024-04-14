@@ -17,9 +17,13 @@ public abstract class TeleOpMode_Main extends OpMode {
     private EaterPart eater_part;
     private AirplanePart airplane_part;
 
-    protected abstract double getX();
+    protected double getX() {
+        return 0;
+    }
 
-    protected abstract double getY();
+    protected double getY() {
+        return 0;
+    }
 
     private boolean is_emergency_mode = false;
 
@@ -82,7 +86,7 @@ public abstract class TeleOpMode_Main extends OpMode {
         } else if (gamepad1.right_trigger > 0.1) {
             this.wheel_part.move(gamepad1.right_trigger * 0.8, WheelPart.Direction.TurnRight);
         } else {
-            this.wheel_part.moveFreely(-gamepad1.left_stick_y, gamepad1.left_stick_x);
+            this.wheel_part.moveFreely(this.getX(),this.getY());
         }
     }
 
