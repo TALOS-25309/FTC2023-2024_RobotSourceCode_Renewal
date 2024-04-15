@@ -109,7 +109,7 @@ public abstract class TeleOpMode_Main extends OpMode {
 
         // Bucket Up and Down
         if (gamepad2.square) {
-            if (this.bucket_part.isBucketUp() && this.linear_part.isLinearDown()) {
+            if (this.bucket_part.isBucketUp()) {
                 this.bucket_part.startStep(BucketPart.Command.BUCKET_DOWN);
             } else {
                 this.bucket_part.startStep(BucketPart.Command.BUCKET_UP);

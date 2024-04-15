@@ -24,11 +24,11 @@ public class DistSensorHW extends Hardware{
         return this.dist.getDistance(DistanceUnit.CM) * (this.is_color_sensor ? 2.0 : 1.0);
     }
     public boolean isObjectDetected() {
-        return (this.dist.getDistance(DistanceUnit.CM) < 10);
+            return (this.dist.getDistance(DistanceUnit.CM) < 10);
     }
 
     public boolean isObjectDetected(int distcm) {
-        return (this.dist.getDistance(DistanceUnit.CM) < distcm);
+            return (this.dist.getDistance(DistanceUnit.CM) < distcm);
     }
 
     @Override

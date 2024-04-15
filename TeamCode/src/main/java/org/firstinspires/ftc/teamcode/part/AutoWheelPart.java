@@ -61,28 +61,32 @@ class RobotPosition {
 public class AutoWheelPart extends Part {
     private final RobotPosition target = new RobotPosition(0,0,0);
     private final RobotPosition current = new RobotPosition(0, 0, 0);
+    private RobotPosition second_target = new RobotPosition(0,0,0);
     private final Wheel wheelFR, wheelFL, wheelBR, wheelBL;
     private final Odometry odometryXL, odometryXR, odometryY;
     public double pixelPos = 0;
-    public double backdropY = 1.5;
+    public double backdropY = 1.4;
     public double detectX = 1.07;
 
     // Constants
     // TODO : Change the values
-    private final double X_OFFSET = 0.241;
-    private final double Y_OFFSET = 0.25;
+    private final double X_OFFSET = 0.247;
+    private final double Y_OFFSET = 0.255;
     private final double TILE_RATIO = 0.000124;
-    private final double ABLE_DISTANCE_ERROR = 0.1;
+    private final double ABLE_DISTANCE_ERROR = 0.05;
     private final double ABLE_ANGLE_ERROR = 0.05;
     private final double ROTATION_SPEED_FACTOR = X_OFFSET + Y_OFFSET;
     private final double SPEED_FACTOR = 0.8;
-    private final int STOP_LIMIT = 10;
+    private final int STOP_LIMIT = 3;
     private final double SPEED_DECREASING_RATIO = 0.5;
     private boolean is_finished = true;
+
+    private double minimum_move_factor = 0.15;
 
     private int stop_counter = 0;
 
     private boolean until_not_move = false;
+    private double until_not_move_factor = 0.0;
     private boolean change_direction = false;
     private boolean ORIENTATION_LEFT = false;
     private boolean BEGIN_FRONT = false;
@@ -190,7 +194,7 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.DROP_RIGHT) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(detectX, 0, 90);
+                    this.setTarget(detectX, 0,  90);
                     break;
                 case 1:
                     this.finishStep();
@@ -200,19 +204,27 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.MOVE_BACKDROP) {
             switch(this.step) {
                 case 0:
-                    //this.setTarget(detectX - 1.0, 0, this.target.theta / Math.PI * 180);
-                    break;
-                case 1:
-                    this.setTarget(detectX - 1.0, 0, this.ORIENTATION_LEFT ? 90 : -90);
-                    break;
-                case 2:
-                    if (!this.BEGIN_FRONT) {
-                        this.backdropY += 1.8;
-                    }
-                    this.setTarget(this.target.x, this.ORIENTATION_LEFT ? backdropY : -backdropY, this.ORIENTATION_LEFT ? 90 : -90);
+                    this.setTarget(0.5, 0, this.target.theta / Math.PI * 180);
+                    this.second_target = new RobotPosition(this.target.x, this.target.y, this.ORIENTATION_LEFT ? 90 * Math.PI / 180 : -90 * Math.PI / 180);
                     this.change_direction = true;
                     break;
+                case 1:
+                    this.setTarget(-1, 0, this.ORIENTATION_LEFT ? 90 : -90);
+                    this.until_not_move = true;
+                    this.until_not_move_factor = 0.5;
+                    break;
+                case 2:
+                    this.setTarget(0.15, 0, this.ORIENTATION_LEFT ? 90 : -90);
+                    break;
                 case 3:
+                    if (!this.BEGIN_FRONT) {
+                        this.backdropY += 1.75;
+                    }
+                    this.setTarget(this.target.x, this.ORIENTATION_LEFT ? backdropY : -backdropY, this.ORIENTATION_LEFT ? 90 : -90);
+                    this.second_target = new RobotPosition(detectX,this.target.y,this.target.theta);
+                    this.change_direction = true;
+                    break;
+                case 4:
                     this.finishStep();
                     break;
             }
@@ -220,11 +232,13 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.MOVE_PIXEL) {
             switch(this.step) {
                 case 0:
+                    pixelPos *= this.ORIENTATION_LEFT ? 1.0 : -1.0;
                     this.setTarget(detectX - pixelPos, this.ORIENTATION_LEFT ? backdropY : -backdropY, this.ORIENTATION_LEFT ? 90 : -90);
                     break;
                 case 1:
                     this.setTarget(detectX - pixelPos, this.ORIENTATION_LEFT ? backdropY + 2.0 : -backdropY - 2.0, this.ORIENTATION_LEFT ? 90 : -90);
                     this.until_not_move = true;
+                    this.until_not_move_factor = 0.3;
                     break;
                 case 2:
                     this.finishStep();
@@ -234,10 +248,10 @@ public class AutoWheelPart extends Part {
         else if (cmd == Command.PARK) {
             switch(this.step) {
                 case 0:
-                    this.setTarget(detectX - pixelPos, this.ORIENTATION_LEFT ? backdropY - 0.1 : -backdropY + 0.1, this.ORIENTATION_LEFT ? 90 : -90);
+                    this.setTarget(detectX - pixelPos, this.ORIENTATION_LEFT ? this.target.y - 0.1 : this.target.y + 0.1, this.ORIENTATION_LEFT ? 90 : -90);
                     break;
                 case 1:
-                    this.setTarget(0, this.ORIENTATION_LEFT ? backdropY - 0.1 : -backdropY + 0.1, this.ORIENTATION_LEFT ? 90 : -90);
+                    this.setTarget(0.1, this.target.y, this.ORIENTATION_LEFT ? 90 : -90);
                     break;
                 case 2:
                     this.finishStep();
@@ -270,6 +284,10 @@ public class AutoWheelPart extends Part {
         dx = (dxl_odm + dxr_odm) / 2.0;
         dy = dy_odm + (dxr_odm - dxl_odm) / 2.0 / X_OFFSET * Y_OFFSET;
         dtheta = (dxr_odm - dxl_odm) / 2.0 / X_OFFSET;
+
+        // until not move는 방향조절하면 안됨. 그래서 강제로 dtheta = 0
+        if(this.until_not_move)
+            dtheta = 0;
 
         this.current.x += dx * Math.cos(this.current.theta) + dy * Math.sin(this.current.theta);
         this.current.y += dx * Math.sin(this.current.theta) + dy * Math.cos(this.current.theta);
@@ -306,54 +324,58 @@ public class AutoWheelPart extends Part {
             w /= abs_v;
         }
 
-        double wheel_speed_FL = (vx + vy - w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR * (this.until_not_move ? 0.2 : 1.0);
-        double wheel_speed_FR = (vx - vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR * (this.until_not_move ? 0.2 : 1.0);
-        double wheel_speed_BL = (vx - vy - w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR * (this.until_not_move ? 0.2 : 1.0);
-        double wheel_speed_BR = (vx + vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR * (this.until_not_move ? 0.2 : 1.0);
+        double wheel_speed_FL = (vx + vy - w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR * (this.until_not_move ? until_not_move_factor : 1.0);
+        double wheel_speed_FR = (vx - vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR * (this.until_not_move ? until_not_move_factor : 1.0);
+        double wheel_speed_BL = (vx - vy - w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR * (this.until_not_move ? until_not_move_factor : 1.0);
+        double wheel_speed_BR = (vx + vy + w * ROTATION_SPEED_FACTOR) * SPEED_FACTOR * (this.until_not_move ? until_not_move_factor : 1.0);
+
+        boolean not_move = Math.abs(dx) < ABLE_DISTANCE_ERROR && Math.abs(dy) < ABLE_DISTANCE_ERROR && Math.abs(dtheta) < ABLE_ANGLE_ERROR;
 
         if(this.until_not_move) {
-            this.wheelFL.move( wheel_speed_FL);
-            this.wheelFR.move( wheel_speed_FR);
-            this.wheelBL.move( wheel_speed_BL);
-            this.wheelBR.move( wheel_speed_BR);
+            this.wheelFL.move(wheel_speed_FL);
+            this.wheelFR.move(wheel_speed_FR);
+            this.wheelBL.move(wheel_speed_BL);
+            this.wheelBR.move(wheel_speed_BR);
         } else {
-            this.wheelFL.move( wheel_speed_FL * 0.8 + 0.2 * (wheel_speed_FL > 0 ? 1.0 : -1.0));
-            this.wheelFR.move( wheel_speed_FR * 0.8 + 0.2 * (wheel_speed_FR > 0 ? 1.0 : -1.0));
-            this.wheelBL.move( wheel_speed_BL * 0.8 + 0.2 * (wheel_speed_BL > 0 ? 1.0 : -1.0));
-            this.wheelBR.move( wheel_speed_BR * 0.8 + 0.2 * (wheel_speed_BR > 0 ? 1.0 : -1.0));
+            double main = 1.0 - this.minimum_move_factor;
+            double mmf = this.minimum_move_factor;
+            this.wheelFL.move(wheel_speed_FL * main + mmf * (wheel_speed_FL > 0 ? 1.0 : -1.0));
+            this.wheelFR.move(wheel_speed_FR * main + mmf * (wheel_speed_FR > 0 ? 1.0 : -1.0));
+            this.wheelBL.move(wheel_speed_BL * main + mmf * (wheel_speed_BL > 0 ? 1.0 : -1.0));
+            this.wheelBR.move(wheel_speed_BR * main + mmf * (wheel_speed_BR > 0 ? 1.0 : -1.0));
         }
 
         // Check if the robot reached the target
         if (until_not_move) {
-            if (Math.abs(dx) < ABLE_DISTANCE_ERROR
-                    && Math.abs(dy) < ABLE_DISTANCE_ERROR
-                    && Math.abs(dtheta) < ABLE_ANGLE_ERROR) {
+            if (not_move) {
                 this.stop_counter++;
-                if(this.stop_counter > STOP_LIMIT) {
+                if(this.stop_counter > STOP_LIMIT / this.until_not_move_factor) {
                     this.wheelFL.stop();
                     this.wheelFR.stop();
                     this.wheelBL.stop();
                     this.wheelBR.stop();
                     this.step++;
-                    this.nextStep();
                     this.stop_counter = 0;
                     this.is_finished = true;
                     this.target.x = this.current.x;
                     this.target.y = this.current.y;
-                    this.target.theta = this.current.theta;
+                    // theta는 target값으로 reset
                     this.until_not_move = false;
+                    this.nextStep();
                 }
-            }
-        }
-        if (this.change_direction) {
-            if(Math.abs(this.target.y - this.current.y) < 0.5) {
-                this.target.x = detectX;
-                this.change_direction = false;
             }
         }
         if (Math.abs(delta_x) < ABLE_DISTANCE_ERROR
                 && Math.abs(delta_y) < ABLE_DISTANCE_ERROR
                 && Math.abs(delta_theta) < ABLE_ANGLE_ERROR) {
+
+            if (this.change_direction) {
+                this.target.x = this.second_target.x;
+                this.target.y = this.second_target.y;
+                this.target.theta = this.second_target.theta;
+                this.change_direction = false;
+            }
+
             this.wheelFL.stop();
             this.wheelFR.stop();
             this.wheelBL.stop();

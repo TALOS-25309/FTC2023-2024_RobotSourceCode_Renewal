@@ -14,7 +14,7 @@ public class BucketPart extends Part {
 
     private final double CRServo_speed = 1.0;
     private final double low_position = 0.27;
-    private final double high_position = 0.65;
+    private final double high_position = 0.8;
 
     private boolean is_bucket_up = false;
 
