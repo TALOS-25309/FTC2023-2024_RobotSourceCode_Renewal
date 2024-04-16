@@ -138,7 +138,7 @@ public class LinearPart extends Part {
             switch (this.step) {
                 case 0:
                     expand = true;
-                    moveLinearWithTargetTicks(linear_speed_go_up, 600);
+                    moveLinearWithTargetTicks(linear_speed_go_up, 700);
                     break;
                 case 1:
                     this.finishStep();
@@ -185,7 +185,7 @@ public class LinearPart extends Part {
             switch (this.step) {
                 case 0:
                     expand = false;
-                    moveLinearWithTargetTicks(linear_speed_go_down, 600);
+                    moveLinearWithTargetTicks(linear_speed_go_down, 700);
                     break;
                 case 1:
                     this.finishStep();
