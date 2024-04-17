@@ -112,7 +112,9 @@ public abstract class TeleOpMode_Main extends OpMode {
             if (this.bucket_part.isBucketUp()) {
                 this.bucket_part.startStep(BucketPart.Command.BUCKET_DOWN);
             } else {
-                this.bucket_part.startStep(BucketPart.Command.BUCKET_UP);
+                if(!this.linear_part.isLinearDown()) {
+                    this.bucket_part.startStep(BucketPart.Command.BUCKET_UP);
+                }
             }
         } else if (gamepad2.circle) {
             if(!this.bucket_part.isBucketUp()) {
